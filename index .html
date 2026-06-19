@@ -1,0 +1,1126 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Sanad — case citation workspace</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,400;0,9..144,500;0,9..144,600;0,9..144,700;1,9..144,400;1,9..144,500&family=Hanken+Grotesk:wght@400;500;600;700&family=Spline+Sans+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+  :root{
+    /* ——— canvas & ink ——— */
+    --canvas:#FAF6EC;       /* warm off-white, date-palm paper */
+    --sand:#F1E8D6;         /* sidebar field */
+    --sand-2:#E8DCC4;       /* deeper sand */
+    --card:#FFFDF7;
+    --ink:#2A211B;          /* warm near-black */
+    --ink-soft:#6B5D4A;     /* muted taupe */
+    --ink-faint:#9A8B73;
+
+    /* ——— institutional + heritage hues ——— */
+    --maroon:#6E2233;       /* authority / primary */
+    --maroon-deep:#4E1726;
+    --date:#8A4B1E;         /* ripe date flesh */
+    --date-glow:#B26A2A;
+    --gold:#BE8A3C;         /* desert gold */
+    --gold-soft:#DCC18A;
+    --palm:#475A39;         /* frond green */
+    --palm-soft:#7E8E63;
+
+    /* ——— hairlines & shadow ——— */
+    --line:#E6D9C0;
+    --line-soft:#EFE6D4;
+    --shadow:0 1px 2px rgba(74,49,20,.05), 0 8px 24px rgba(74,49,20,.06);
+    --shadow-lg:0 18px 50px rgba(60,35,18,.20);
+
+    /* ——— tag system (semantic colour) ——— */
+    --t-subject-bg:#E9EDE0;  --t-subject-fg:#3E5130;
+    --t-provision-bg:#ECE4D5; --t-provision-fg:#5C5040;
+    --t-casetype-bg:#F4E2E4;  --t-casetype-fg:#6E2233;
+    --t-keyword-bg:#F6E9D2;   --t-keyword-fg:#8A5A1E;
+
+    --r:12px; --r-sm:9px; --r-lg:18px;
+    --side-w:288px;
+  }
+
+  *{box-sizing:border-box;}
+  @media (prefers-reduced-motion: reduce){ *{animation:none !important; transition:none !important;} }
+
+  html,body{height:100%;}
+  body{
+    margin:0; background:var(--canvas); color:var(--ink);
+    font-family:'Hanken Grotesk',system-ui,-apple-system,sans-serif;
+    font-size:15px; line-height:1.55; -webkit-font-smoothing:antialiased;
+  }
+  a{color:var(--maroon); text-underline-offset:2px;}
+  ::selection{background:var(--gold-soft);}
+  *:focus-visible{outline:2.5px solid var(--maroon); outline-offset:2px; border-radius:4px;}
+
+  /* ————————————————————————— shell ————————————————————————— */
+  .app{display:grid; grid-template-columns:var(--side-w) 1fr; min-height:100vh;}
+
+  /* ————————————————————————— sidebar ————————————————————————— */
+  .sidebar{
+    background:var(--sand); border-right:1px solid var(--line);
+    padding:22px 18px 18px; display:flex; flex-direction:column; gap:18px;
+    position:sticky; top:0; height:100vh; overflow-y:auto;
+  }
+  .brand{display:flex; align-items:center; gap:11px;}
+  .brand .palm{width:40px; height:40px; flex:none;}
+  .brand-text{display:flex; flex-direction:column; line-height:1;}
+  .wordmark{font-family:'Fraunces',serif; font-weight:600; font-size:25px; color:var(--maroon-deep); letter-spacing:.2px;}
+  .wordmark-ur{font-family:'Fraunces',serif; font-size:15px; color:var(--gold); margin-top:3px; letter-spacing:.5px;}
+
+  .palm-fronds path{fill:none; stroke:var(--palm); stroke-width:1.6; stroke-linecap:round;}
+  .palm-trunk{fill:var(--maroon-deep);}
+  .palm-date{fill:var(--date-glow);}
+
+  .btn-new{
+    width:100%; display:flex; align-items:center; justify-content:center; gap:8px;
+    background:var(--maroon-deep); color:#fff; border:none; border-radius:var(--r);
+    padding:12px 14px; font-size:14.5px; font-weight:600; cursor:pointer;
+    box-shadow:0 2px 0 var(--maroon); transition:transform .12s ease, background .15s ease;
+  }
+  .btn-new:hover{background:var(--maroon); transform:translateY(-1px);}
+  .btn-new:active{transform:translateY(1px); box-shadow:none;}
+
+  .nav-label{
+    font-size:11px; letter-spacing:.13em; text-transform:uppercase;
+    color:var(--ink-faint); font-weight:700; padding:0 4px; display:flex;
+    align-items:center; justify-content:space-between;
+  }
+  .nav-label button{
+    all:unset; cursor:pointer; color:var(--maroon); font-size:17px; line-height:1;
+    width:22px; height:22px; display:grid; place-items:center; border-radius:6px;
+  }
+  .nav-label button:hover{background:var(--sand-2);}
+
+  .collections{display:flex; flex-direction:column; gap:2px; margin-top:8px;}
+  .coll{
+    display:flex; align-items:center; gap:9px; padding:8px 10px; border-radius:var(--r-sm);
+    cursor:pointer; border:1px solid transparent; color:var(--ink); font-size:14px; text-align:left; background:none; width:100%;
+    transition:background .12s ease;
+  }
+  .coll:hover{background:var(--sand-2);}
+  .coll.active{background:var(--card); border-color:var(--line); box-shadow:var(--shadow);}
+  .coll .dot{width:10px; height:10px; border-radius:50%; flex:none; box-shadow:inset 0 0 0 1px rgba(0,0,0,.08);}
+  .coll .nm{flex:1; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;}
+  .coll .ct{font-family:'Spline Sans Mono',monospace; font-size:11.5px; color:var(--ink-faint); background:var(--sand-2); padding:1px 7px; border-radius:999px;}
+  .coll.active .ct{background:var(--sand);}
+  .coll .cog{all:unset; cursor:pointer; color:var(--ink-faint); font-size:13px; opacity:0; padding:0 2px;}
+  .coll:hover .cog{opacity:1;}
+  .coll .cog:hover{color:var(--maroon);}
+
+  .legend{display:flex; flex-direction:column; gap:7px; margin-top:6px;}
+  .legend-row{display:flex; align-items:center; gap:9px; font-size:12.5px; color:var(--ink-soft);}
+  .legend-row .sw{width:13px; height:13px; border-radius:4px; flex:none;}
+
+  .side-foot{margin-top:auto; padding-top:14px; border-top:1px solid var(--line); display:flex; flex-direction:column; gap:12px;}
+  .io-row{display:flex; gap:8px;}
+  .io-row button{
+    flex:1; background:var(--card); border:1px solid var(--line); border-radius:var(--r-sm);
+    padding:8px; font-size:12.5px; color:var(--ink-soft); cursor:pointer; font-family:inherit; font-weight:500;
+  }
+  .io-row button:hover{border-color:var(--gold); color:var(--ink);}
+  .provenance{font-size:11.5px; color:var(--ink-faint); line-height:1.5; font-style:italic;}
+  .provenance b{color:var(--date); font-style:normal; font-weight:600;}
+
+  /* ————————————————————————— main ————————————————————————— */
+  .main{padding:30px 36px 70px; max-width:1080px;}
+  .mobile-bar{display:none;}
+
+  /* —— source strip —— */
+  .sources{margin-bottom:30px;}
+  .sources-head{display:flex; align-items:baseline; gap:10px; margin-bottom:12px;}
+  .sources-head h2{font-family:'Fraunces',serif; font-weight:600; font-size:17px; margin:0;}
+  .sources-head p{margin:0; font-size:12.5px; color:var(--ink-soft);}
+  .court-rail{display:flex; gap:10px; overflow-x:auto; padding-bottom:6px; scrollbar-width:thin;}
+  .court{
+    flex:none; display:flex; align-items:center; gap:10px; background:var(--card);
+    border:1px solid var(--line); border-radius:var(--r); padding:9px 13px 9px 9px; cursor:pointer;
+    font-family:inherit; transition:transform .12s ease, border-color .12s ease, box-shadow .12s ease;
+  }
+  .court:hover{transform:translateY(-2px); border-color:var(--maroon); box-shadow:var(--shadow);}
+  .court .key{
+    width:38px; height:38px; border-radius:8px; background:var(--maroon-deep); color:#fff;
+    font-family:'Spline Sans Mono',monospace; font-weight:500; font-size:12.5px;
+    display:grid; place-items:center; flex:none;
+  }
+  .court .meta{display:flex; flex-direction:column; line-height:1.25; text-align:left;}
+  .court .meta .nm{font-size:13px; font-weight:600; color:var(--ink); white-space:nowrap;}
+  .court .meta .go{font-size:11px; color:var(--ink-faint);}
+
+  .paste{display:flex; gap:10px; margin-top:14px; flex-wrap:wrap;}
+  .paste input{flex:1; min-width:240px;}
+
+  /* —— inputs —— */
+  input[type=text], input[type=url], input[type=number], textarea, select{
+    font-family:inherit; font-size:14px; padding:10px 12px; border:1px solid var(--line);
+    border-radius:var(--r-sm); background:var(--card); color:var(--ink); width:100%;
+    transition:border-color .14s ease, box-shadow .14s ease;
+  }
+  textarea{resize:vertical; line-height:1.5;}
+  input:focus, textarea:focus, select:focus{outline:none; border-color:var(--maroon); box-shadow:0 0 0 3px rgba(110,34,51,.10);}
+  input.invalid{border-color:#B23A48; box-shadow:0 0 0 3px rgba(178,58,72,.10);}
+
+  button{font-family:inherit;}
+  .btn{
+    font-size:14px; font-weight:600; cursor:pointer; border-radius:var(--r-sm);
+    border:1px solid var(--line); background:var(--card); color:var(--ink); padding:10px 16px;
+    transition:border-color .14s ease, background .14s ease;
+  }
+  .btn:hover{border-color:var(--ink-soft);}
+  .btn.primary{background:var(--maroon-deep); border-color:var(--maroon-deep); color:#fff; box-shadow:0 2px 0 var(--maroon);}
+  .btn.primary:hover{background:var(--maroon);}
+  .btn.primary:active{transform:translateY(1px); box-shadow:none;}
+  .btn.ghost{background:transparent; border-color:transparent; color:var(--ink-soft); padding:7px 11px; font-weight:500;}
+  .btn.ghost:hover{color:var(--maroon); background:var(--sand);}
+  .btn:disabled{opacity:.5; cursor:not-allowed;}
+  .field-err{font-size:12px; color:#B23A48; margin-top:5px; min-height:15px; font-weight:500;}
+
+  /* —— library header —— */
+  .lib-head{display:flex; justify-content:space-between; align-items:flex-end; gap:16px; margin-bottom:16px; flex-wrap:wrap;}
+  .lib-title{display:flex; align-items:center; gap:10px;}
+  .lib-title h1{font-family:'Fraunces',serif; font-weight:600; font-size:23px; margin:0; color:var(--ink);}
+  .lib-title .tdot{width:11px; height:11px; border-radius:50%; flex:none;}
+  .lib-title .count{font-family:'Spline Sans Mono',monospace; font-size:12.5px; color:var(--ink-faint); background:var(--sand); padding:2px 9px; border-radius:999px;}
+  .lib-search{position:relative; min-width:240px;}
+  .lib-search input{padding-left:34px;}
+  .lib-search svg{position:absolute; left:11px; top:50%; transform:translateY(-50%); color:var(--ink-faint);}
+
+  /* —— filter chips —— */
+  .chips{display:flex; gap:7px; flex-wrap:wrap; margin-bottom:20px; align-items:center;}
+  .chip{
+    font-size:12.5px; padding:5px 12px; border-radius:999px; border:1px solid var(--line);
+    background:var(--card); color:var(--ink-soft); cursor:pointer; font-family:inherit; transition:all .12s ease;
+  }
+  .chip:hover{border-color:var(--gold);}
+  .chip.active{background:var(--ink); color:var(--canvas); border-color:var(--ink);}
+  .chips .clearf{all:unset; cursor:pointer; font-size:12px; color:var(--maroon); margin-left:2px;}
+  .chips .clearf:hover{text-decoration:underline;}
+
+  /* —— citation cards —— */
+  .empty{
+    border:1.5px dashed var(--line); border-radius:var(--r-lg); padding:46px 28px; text-align:center;
+    color:var(--ink-soft); background:linear-gradient(180deg, var(--card), transparent);
+  }
+  .empty svg{width:64px; height:64px; opacity:.85; margin-bottom:6px;}
+  .empty h3{font-family:'Fraunces',serif; font-weight:600; font-size:18px; margin:8px 0 6px; color:var(--ink);}
+  .empty p{margin:0 auto; max-width:360px; font-size:13.5px;}
+
+  .card{
+    background:var(--card); border:1px solid var(--line); border-left:3px solid var(--maroon);
+    border-radius:var(--r); padding:17px 19px; margin-bottom:13px; box-shadow:var(--shadow);
+    transition:transform .12s ease, box-shadow .12s ease;
+  }
+  .card:hover{transform:translateY(-1px); box-shadow:0 2px 4px rgba(74,49,20,.07), 0 14px 32px rgba(74,49,20,.09);}
+  .card-top{display:flex; justify-content:space-between; align-items:flex-start; gap:12px;}
+  .card-code{font-family:'Spline Sans Mono',monospace; font-weight:500; font-size:15px; color:var(--maroon-deep); letter-spacing:-.2px;}
+  .card-meta{font-size:11.5px; color:var(--ink-faint); text-transform:uppercase; letter-spacing:.04em; margin-top:3px; display:flex; align-items:center; gap:7px; flex-wrap:wrap;}
+  .card-coll{display:inline-flex; align-items:center; gap:5px;}
+  .card-coll .d{width:8px; height:8px; border-radius:50%;}
+  .card-name{font-family:'Fraunces',serif; font-style:italic; font-weight:500; font-size:16px; margin:8px 0 0; color:var(--ink);}
+  .card-point{font-size:14px; color:var(--ink); margin:9px 0 0;}
+  .card-notes{font-size:13px; color:var(--ink-soft); margin:7px 0 0;}
+  .card-tags{display:flex; gap:6px; flex-wrap:wrap; margin-top:11px;}
+  .pill{font-size:11.5px; padding:3px 10px; border-radius:999px; display:inline-flex; align-items:center; gap:5px; font-weight:500;}
+  .pill .pk{opacity:.6; font-weight:600;}
+  .t-subject{background:var(--t-subject-bg); color:var(--t-subject-fg);}
+  .t-provision{background:var(--t-provision-bg); color:var(--t-provision-fg);}
+  .t-casetype{background:var(--t-casetype-bg); color:var(--t-casetype-fg);}
+  .t-keyword{background:var(--t-keyword-bg); color:var(--t-keyword-fg);}
+  .pill button{all:unset; cursor:pointer; font-size:11px; line-height:1; opacity:.7; padding:0 1px;}
+  .pill button:hover{opacity:1;}
+  .card-files{display:flex; gap:6px; flex-wrap:wrap; margin-top:10px;}
+  .file-chip{font-size:11.5px; background:var(--line-soft); padding:3px 9px; border-radius:6px; color:var(--ink-soft); display:inline-flex; align-items:center; gap:5px;}
+  .card-bottom{display:flex; justify-content:space-between; align-items:center; margin-top:13px; padding-top:12px; border-top:1px solid var(--line-soft);}
+  .src-link{font-size:12.5px; font-weight:500;}
+  .card-actions{display:flex; gap:4px;}
+
+  /* ————————————————————————— modal ————————————————————————— */
+  .overlay{
+    position:fixed; inset:0; background:rgba(42,33,27,.42); backdrop-filter:blur(2px);
+    display:flex; align-items:flex-start; justify-content:center; padding:42px 16px; overflow-y:auto; z-index:60;
+    animation:fade .16s ease;
+  }
+  @keyframes fade{from{opacity:0;} to{opacity:1;}}
+  .overlay.hidden{display:none;}
+  .modal{
+    background:var(--canvas); border-radius:var(--r-lg); max-width:560px; width:100%;
+    padding:24px 28px 26px; box-shadow:var(--shadow-lg); animation:rise .2s cubic-bezier(.2,.8,.25,1);
+    border:1px solid var(--line);
+  }
+  @keyframes rise{from{opacity:0; transform:translateY(14px) scale(.99);} to{opacity:1; transform:none;}}
+  .modal-head{display:flex; justify-content:space-between; align-items:center; margin-bottom:18px;}
+  .modal-head h3{font-family:'Fraunces',serif; font-weight:600; font-size:19px; margin:0;}
+  label{display:block; font-size:12px; color:var(--ink-soft); margin-bottom:5px; font-weight:600; letter-spacing:.01em;}
+  label .opt{color:var(--ink-faint); font-weight:400; text-transform:none; letter-spacing:0;}
+  .field{margin-bottom:14px;}
+  .field-row{display:flex; gap:12px;}
+  .field-row .field{flex:1;}
+  .coll-pick{display:flex; gap:8px;}
+  .coll-pick select{flex:1;}
+  .coll-pick button{flex:none; padding:0 13px; border:1px solid var(--line); background:var(--card); border-radius:var(--r-sm); cursor:pointer; font-size:18px; color:var(--maroon); font-weight:500;}
+  .coll-pick button:hover{border-color:var(--maroon);}
+
+  .file-row{display:flex; gap:8px; flex-wrap:wrap; align-items:center; margin-bottom:10px;}
+  .file-row .file-chip button{all:unset; cursor:pointer;}
+
+  .taggen{display:flex; align-items:center; gap:11px; margin-bottom:10px;}
+  .btn-gen{
+    display:inline-flex; align-items:center; gap:7px; background:linear-gradient(135deg, var(--date), var(--gold));
+    color:#fff; border:none; border-radius:var(--r-sm); padding:9px 15px; font-size:13.5px; font-weight:600; cursor:pointer;
+    box-shadow:0 2px 0 #8a5a1e; transition:transform .12s ease, filter .15s ease;
+  }
+  .btn-gen:hover{filter:brightness(1.05); transform:translateY(-1px);}
+  .btn-gen:active{transform:translateY(1px); box-shadow:none;}
+  .tag-status{font-size:12.5px; color:var(--ink-soft);}
+  .tag-status.ok{color:var(--palm); font-weight:500;}
+  .tagarea{display:flex; gap:6px; flex-wrap:wrap;}
+  .tagarea:empty{display:none;}
+  .add-tag{display:flex; gap:7px; margin-top:11px;}
+  .add-tag select{flex:none; width:128px; font-size:13px; padding:9px 10px;}
+  .add-tag input{flex:1;}
+  .modal-actions{display:flex; justify-content:space-between; align-items:center; gap:10px; margin-top:20px;}
+  .modal-actions .right{display:flex; gap:10px; margin-left:auto;}
+  .del-link{all:unset; cursor:pointer; color:#B23A48; font-size:13px; font-weight:500;}
+  .del-link:hover{text-decoration:underline;}
+
+  /* —— toast —— */
+  .toast{
+    position:fixed; bottom:26px; left:50%; transform:translateX(-50%) translateY(20px);
+    background:var(--ink); color:var(--canvas); padding:12px 20px; border-radius:999px;
+    font-size:13.5px; font-weight:500; box-shadow:var(--shadow-lg); opacity:0; pointer-events:none;
+    transition:opacity .25s ease, transform .25s ease; z-index:80; display:flex; align-items:center; gap:9px;
+  }
+  .toast.show{opacity:1; transform:translateX(-50%) translateY(0);}
+  .toast .td{width:8px; height:8px; border-radius:50%; background:var(--gold);}
+
+  .scrim{display:none;}
+
+  /* ————————————————————————— responsive ————————————————————————— */
+  @media (max-width:860px){
+    .app{grid-template-columns:1fr;}
+    .mobile-bar{
+      display:flex; align-items:center; justify-content:space-between; gap:12px;
+      padding:13px 18px; background:var(--sand); border-bottom:1px solid var(--line);
+      position:sticky; top:0; z-index:40;
+    }
+    .mobile-bar .mb-brand{display:flex; align-items:center; gap:9px;}
+    .mobile-bar .palm{width:30px; height:30px;}
+    .mobile-bar .wordmark{font-size:20px;}
+    .burger{all:unset; cursor:pointer; width:42px; height:38px; display:grid; place-items:center; border:1px solid var(--line); border-radius:var(--r-sm); background:var(--card); color:var(--maroon);}
+    .sidebar{
+      position:fixed; top:0; left:0; bottom:0; width:280px; z-index:70;
+      transform:translateX(-105%); transition:transform .25s cubic-bezier(.2,.8,.25,1);
+      box-shadow:var(--shadow-lg);
+    }
+    .sidebar.open{transform:translateX(0);}
+    .scrim.show{display:block; position:fixed; inset:0; background:rgba(42,33,27,.4); z-index:65;}
+    .main{padding:22px 18px 60px;}
+  }
+  @media (max-width:520px){
+    .lib-search{width:100%;}
+    .field-row{flex-direction:column; gap:0;}
+    .modal{padding:20px 18px 22px;}
+  }
+</style>
+</head>
+<body>
+
+<!-- mobile top bar -->
+<header class="mobile-bar">
+  <div class="mb-brand">
+    <svg class="palm" viewBox="0 0 48 48" aria-hidden="true">
+      <g class="palm-fronds"><path d="M24 17 Q12 14 6 22"/><path d="M24 17 Q13 11 9 16"/><path d="M24 17 Q18 8 16 6"/><path d="M24 17 Q24 8 24 4"/><path d="M24 17 Q30 8 32 6"/><path d="M24 17 Q35 11 39 16"/><path d="M24 17 Q36 14 42 22"/></g>
+      <path class="palm-trunk" d="M22.4 18 C22.4 25 22.7 30 23 34 L25 34 C25.3 30 25.6 25 25.6 18 Z"/>
+      <circle class="palm-date" cx="21.4" cy="19.4" r="1.25"/><circle class="palm-date" cx="24" cy="20.3" r="1.25"/><circle class="palm-date" cx="26.6" cy="19.4" r="1.25"/><circle class="palm-date" cx="22.7" cy="21.6" r="1.25"/><circle class="palm-date" cx="25.3" cy="21.6" r="1.25"/>
+    </svg>
+    <span class="wordmark">Sanad</span>
+  </div>
+  <button class="burger" id="burger" aria-label="Open collections">☰</button>
+</header>
+
+<div class="app">
+
+  <!-- ————— sidebar ————— -->
+  <aside class="sidebar" id="sidebar">
+    <div class="brand">
+      <svg class="palm" viewBox="0 0 48 48" aria-hidden="true">
+        <g class="palm-fronds"><path d="M24 17 Q12 14 6 22"/><path d="M24 17 Q13 11 9 16"/><path d="M24 17 Q18 8 16 6"/><path d="M24 17 Q24 8 24 4"/><path d="M24 17 Q30 8 32 6"/><path d="M24 17 Q35 11 39 16"/><path d="M24 17 Q36 14 42 22"/></g>
+        <path class="palm-trunk" d="M22.4 18 C22.4 25 22.7 30 23 34 L25 34 C25.3 30 25.6 25 25.6 18 Z"/>
+        <circle class="palm-date" cx="21.4" cy="19.4" r="1.25"/><circle class="palm-date" cx="24" cy="20.3" r="1.25"/><circle class="palm-date" cx="26.6" cy="19.4" r="1.25"/><circle class="palm-date" cx="22.7" cy="21.6" r="1.25"/><circle class="palm-date" cx="25.3" cy="21.6" r="1.25"/>
+      </svg>
+      <div class="brand-text">
+        <span class="wordmark">Sanad</span>
+        <span class="wordmark-ur">سند</span>
+      </div>
+    </div>
+
+    <button class="btn-new" id="newCitationBtn">
+      <svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M8 3v10M3 8h10"/></svg>
+      New citation
+    </button>
+
+    <div>
+      <div class="nav-label">
+        <span>Collections</span>
+        <button id="newCollBtn" title="New collection" aria-label="New collection">+</button>
+      </div>
+      <div class="collections" id="collectionList"></div>
+    </div>
+
+    <div>
+      <div class="nav-label"><span>Tag legend</span></div>
+      <div class="legend">
+        <div class="legend-row"><span class="sw" style="background:var(--t-subject-bg)"></span> Subject — area of law</div>
+        <div class="legend-row"><span class="sw" style="background:var(--t-provision-bg)"></span> Provision — statute / section</div>
+        <div class="legend-row"><span class="sw" style="background:var(--t-casetype-bg)"></span> Case type — posture</div>
+        <div class="legend-row"><span class="sw" style="background:var(--t-keyword-bg)"></span> Keyword — doctrine</div>
+      </div>
+    </div>
+
+    <div class="side-foot">
+      <div class="io-row">
+        <button id="exportBtn">Export backup</button>
+        <button id="importBtn">Import</button>
+        <input type="file" id="importFile" accept="application/json" hidden>
+      </div>
+      <p class="provenance">Named for the <b>sanad</b> — the documented backing of an argument. Rooted in <b>Kech</b>, where date palms keep their worth for generations.</p>
+    </div>
+  </aside>
+  <div class="scrim" id="scrim"></div>
+
+  <!-- ————— main ————— -->
+  <main class="main">
+
+    <section class="sources">
+      <div class="sources-head">
+        <h2>Search a source</h2>
+        <p>Opens the official court site in a new tab — nothing is scraped.</p>
+      </div>
+      <div class="court-rail" id="courtRail"></div>
+      <div class="paste">
+        <input type="url" id="pasteUrl" placeholder="Paste a judgment link to save — https://…">
+        <button class="btn primary" id="pasteBtn">Add to library →</button>
+      </div>
+    </section>
+
+    <div class="lib-head">
+      <div class="lib-title">
+        <span class="tdot" id="libDot" style="background:var(--maroon)"></span>
+        <h1 id="libTitle">All citations</h1>
+        <span class="count" id="libCount">0</span>
+      </div>
+      <div class="lib-search">
+        <svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="7" cy="7" r="4.5"/><path d="M11 11l3 3" stroke-linecap="round"/></svg>
+        <input type="text" id="librarySearch" placeholder="Search saved citations…">
+      </div>
+    </div>
+
+    <div class="chips" id="tagFilterRow"></div>
+    <div id="libraryList"></div>
+  </main>
+</div>
+
+<!-- ————— citation editor modal ————— -->
+<div class="overlay hidden" id="overlay">
+  <div class="modal" role="dialog" aria-modal="true" aria-labelledby="modalTitle">
+    <div class="modal-head">
+      <h3 id="modalTitle">Save to library</h3>
+      <button class="btn ghost" id="closeModal" aria-label="Close">✕</button>
+    </div>
+
+    <div class="field">
+      <label for="fCitation">Citation</label>
+      <input type="text" id="fCitation" placeholder="PLD 2021 SC 145">
+      <div class="field-err" id="errCitation"></div>
+    </div>
+
+    <div class="field">
+      <label for="fCaseName">Case name</label>
+      <input type="text" id="fCaseName" placeholder="Muhammad Ramzan vs State">
+      <div class="field-err" id="errCaseName"></div>
+    </div>
+
+    <div class="field-row">
+      <div class="field">
+        <label for="fCourt">Court</label>
+        <input type="text" id="fCourt" list="courtList" placeholder="Supreme Court of Pakistan">
+        <datalist id="courtList"></datalist>
+      </div>
+      <div class="field">
+        <label for="fYear">Year</label>
+        <input type="text" id="fYear" placeholder="2021">
+      </div>
+    </div>
+
+    <div class="field">
+      <label for="fCollection">Collection</label>
+      <div class="coll-pick">
+        <select id="fCollection"></select>
+        <button id="modalNewColl" title="New collection" aria-label="New collection">+</button>
+      </div>
+    </div>
+
+    <div class="field">
+      <label for="fKeyPoint">Key point / holding</label>
+      <textarea id="fKeyPoint" rows="2" placeholder="What this case actually decided"></textarea>
+    </div>
+
+    <div class="field">
+      <label for="fNotes">Notes <span class="opt">— where you used it, things to revisit</span></label>
+      <textarea id="fNotes" rows="2" placeholder="Used in Khalid's bail petition, para 14…"></textarea>
+    </div>
+
+    <div class="field">
+      <label>Scanned documents</label>
+      <div class="file-row" id="fileRow"></div>
+      <input type="file" id="fileInput" multiple hidden>
+      <button class="btn" id="fileBtn" style="padding:8px 14px; font-size:13px;">Attach scan</button>
+    </div>
+
+    <div class="field">
+      <label>Tags <span class="opt">— read from the text, edit freely</span></label>
+      <div class="taggen">
+        <button class="btn-gen" id="genTagsBtn">
+          <svg width="15" height="15" viewBox="0 0 16 16" fill="currentColor"><path d="M8 0l1.6 4.2L14 5.5 9.6 6.9 8 11 6.4 6.9 2 5.5l4.4-1.3L8 0z" opacity=".95"/><circle cx="13" cy="12" r="1.6"/><circle cx="3" cy="11.5" r="1.2"/></svg>
+          Read tags from text
+        </button>
+        <span class="tag-status" id="tagStatus"></span>
+      </div>
+      <div class="tagarea" id="tagArea"></div>
+      <div class="add-tag">
+        <select id="addTagCategory">
+          <option value="subject">Subject</option>
+          <option value="provision">Provision</option>
+          <option value="casetype">Case type</option>
+          <option value="keyword">Keyword</option>
+        </select>
+        <input type="text" id="addTagText" placeholder="Add a tag and press Enter">
+      </div>
+    </div>
+
+    <div class="field" id="sourceUrlField" style="display:none;">
+      <label>Source link</label>
+      <input type="text" id="fSourceUrl" readonly>
+    </div>
+
+    <div class="modal-actions">
+      <button class="del-link" id="modalDelete" style="display:none;">Delete citation</button>
+      <div class="right">
+        <button class="btn" id="cancelBtn">Cancel</button>
+        <button class="btn primary" id="saveBtn">Save citation</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="toast" id="toast"><span class="td"></span><span id="toastMsg"></span></div>
+
+<script>
+/* ============================================================
+   Sanad — case citation workspace
+   Single-file, client-side. State persists in localStorage.
+   ============================================================ */
+
+/* ——— constants ——— */
+const STORE_KEY = "sanad.v2";
+const COLL_COLORS = ["#6E2233","#8A4B1E","#BE8A3C","#475A39","#A9572B","#5B6E4A","#7A3B52","#9A7B2E"];
+
+const sources = [
+  {code:"SC",  name:"Supreme Court of Pakistan", url:"https://www.supremecourt.gov.pk"},
+  {code:"LHC", name:"Lahore High Court",         url:"https://lhc.gov.pk"},
+  {code:"SHC", name:"Sindh High Court",          url:"https://www.sindhhighcourt.gov.pk"},
+  {code:"BHC", name:"Balochistan High Court",    url:"https://bhc.gov.pk"},
+  {code:"PHC", name:"Peshawar High Court",       url:"https://peshawarhighcourt.gov.pk"},
+  {code:"IHC", name:"Islamabad High Court",      url:"https://www.ihc.gov.pk"}
+];
+
+const tagClass  = {subject:"t-subject", provision:"t-provision", casetype:"t-casetype", keyword:"t-keyword"};
+const tagPrefix = {subject:"Subject", provision:"Provision", casetype:"Case", keyword:"Keyword"};
+
+const PALM_SVG = `<svg viewBox="0 0 48 48" aria-hidden="true">
+  <g class="palm-fronds"><path d="M24 17 Q12 14 6 22"/><path d="M24 17 Q13 11 9 16"/><path d="M24 17 Q18 8 16 6"/><path d="M24 17 Q24 8 24 4"/><path d="M24 17 Q30 8 32 6"/><path d="M24 17 Q35 11 39 16"/><path d="M24 17 Q36 14 42 22"/></g>
+  <path class="palm-trunk" d="M22.4 18 C22.4 25 22.7 30 23 34 L25 34 C25.3 30 25.6 25 25.6 18 Z"/>
+  <circle class="palm-date" cx="21.4" cy="19.4" r="1.25"/><circle class="palm-date" cx="24" cy="20.3" r="1.25"/><circle class="palm-date" cx="26.6" cy="19.4" r="1.25"/><circle class="palm-date" cx="22.7" cy="21.6" r="1.25"/><circle class="palm-date" cx="25.3" cy="21.6" r="1.25"/>
+</svg>`;
+
+/* ——— state ——— */
+let library = [];
+let collections = [];
+let editingId = null;
+let pendingFiles = [];
+let pendingTags = [];
+let activeTagFilter = null;
+let activeCollection = "all";   // "all" or collection id
+
+/* ——— persistence ——— */
+function save(){
+  try{ localStorage.setItem(STORE_KEY, JSON.stringify({library, collections})); }
+  catch(e){ console.warn("Could not save to localStorage", e); }
+}
+function load(){
+  try{
+    const raw = localStorage.getItem(STORE_KEY);
+    if(raw){
+      const data = JSON.parse(raw);
+      library = Array.isArray(data.library) ? data.library : [];
+      collections = Array.isArray(data.collections) ? data.collections : [];
+      return;
+    }
+  }catch(e){ console.warn("Could not read localStorage", e); }
+  seed();   // first visit
+}
+function seed(){
+  collections = [{id:"c_bail", name:"Bail work", color:COLL_COLORS[0]}];
+  library = [{
+    id: Date.now(),
+    citation:"PLD 2021 SC 145",
+    caseName:"Muhammad Ramzan vs State (example — delete anytime)",
+    court:"Supreme Court of Pakistan", year:"2021",
+    keyPoint:"Bail is not to be withheld as a punishment before trial.",
+    notes:"Used in Khalid's bail petition, para 14.",
+    folderId:"c_bail", files:[],
+    tags:[{category:"subject",label:"Criminal"},{category:"provision",label:"S.497 CrPC"},{category:"casetype",label:"Bail"}],
+    sourceUrl:""
+  }];
+  save();
+}
+
+/* ——— small helpers ——— */
+function esc(s){ return String(s==null?"":s).replace(/[&<>"']/g, m=>({"&":"&amp;","<":"&lt;",">":"&gt;","\"":"&quot;","'":"&#39;"}[m])); }
+function collById(id){ return collections.find(c=>c.id===id) || null; }
+function toast(msg){
+  const t=document.getElementById("toast");
+  document.getElementById("toastMsg").textContent=msg;
+  t.classList.add("show");
+  clearTimeout(toast._t);
+  toast._t=setTimeout(()=>t.classList.remove("show"), 2400);
+}
+
+/* ============================================================
+   OFFLINE TAG ENGINE  — regex / keyword reader (no network)
+   Reads citation + case name + court + key point + notes and
+   proposes Subject / Provision / Case type / Keyword tags.
+   ============================================================ */
+const SUBJECT_RULES = [
+  {label:"Criminal",       terms:[/\bbail\b/,/\bf\.?\s?i\.?\s?r\b/,/\bmurder\b/,/\bqatl\b/,/\bp\.?p\.?c\b/,/\bcr\.?\s?p\.?\s?c\b/,/\bnarcotic/,/\bacquit/,/\bconvict/,/\baccused\b/,/\bprosecution\b/,/\bdacoity\b/,/\brobbery\b/,/\btheft\b/,/\banti.?terror/,/\bhudood\b/,/\bqisas\b/,/\bdiyat\b/,/\bsentence\b/,/\bcrime\b/]},
+  {label:"Civil",          terms:[/\bsuit\b/,/\bdecree\b/,/\binjunction\b/,/\bspecific performance\b/,/\bdeclaration\b/,/\bpossession\b/,/\bc\.?p\.?c\b/,/\bplaint\b/,/\bejectment\b/,/\bpartition\b/,/\beasement\b/,/\bdamages\b/,/\bcontract\b/,/\bsale deed\b/,/\bspecific relief\b/]},
+  {label:"Constitutional", terms:[/\barticle\s+\d+/,/\bfundamental rights?\b/,/\bwrit\b/,/\bconstitution\b/,/\bultra vires\b/,/\blocus standi\b/,/\bpublic interest\b/,/\bmala fide\b/,/\bquo warranto\b/,/\bmandamus\b/]},
+  {label:"Tax",            terms:[/\bincome tax\b/,/\bsales tax\b/,/\bf\.?b\.?r\b/,/\bcustoms\b/,/\bassessment\b/,/\bwithholding\b/,/\btax reference\b/,/\bordinance\s+2001\b/,/\bfed\b/,/\bcommissioner inland\b/]},
+  {label:"Labour",         terms:[/\blabou?r\b/,/\bindustrial\b/,/\bworkman\b/,/\bnirc\b/,/\bretrench/,/\bgratuity\b/,/\btrade union\b/,/\bwages\b/,/\btermination of service\b/]},
+  {label:"Corporate",      terms:[/\bsecp\b/,/\bcompanies (act|ordinance)\b/,/\bwinding up\b/,/\boppression\b/,/\bmismanagement\b/,/\bshareholder/,/\bdirectors?\b/,/\bmerger\b/,/\bscheme of arrangement\b/]},
+  {label:"Family",         terms:[/\bfamily court\b/,/\bdissolution of marriage\b/,/\bkhula\b/,/\bdower\b/,/\bmaintenance\b/,/\bcustody\b/,/\bhizanat\b/,/\bnikah\b/,/\btalaq\b/,/\bguardian\b/,/\bdivorce\b/]},
+  {label:"Banking",        terms:[/\bbanking\b/,/\bfinancial institution\b/,/\brecovery of (finance|loan)\b/,/\bmortgage\b/,/\bbanking court\b/,/\bfinance ordinance\b/]},
+  {label:"Service",        terms:[/\bcivil servant\b/,/\bservice tribunal\b/,/\bpromotion\b/,/\bseniority\b/,/\bdepartmental\b/,/\breinstat/,/\bremoval from service\b/,/\bf\.?s\.?t\b/]},
+  {label:"Revenue",        terms:[/\bmutation\b/,/\bfard\b/,/\bjamabandi\b/,/\bkhasra\b/,/\brevenue record\b/,/\bsettlement\b/,/\bland record\b/]}
+];
+
+const CASETYPE_RULES = [
+  {label:"Bail",       test:/\bbail\b|\b497\b|\b498\b|pre.?arrest|post.?arrest/},
+  {label:"Quashment",  test:/\bquash/},
+  {label:"Writ",       test:/\bwrit\b|constitutional petition|\b199\b/},
+  {label:"Appeal",     test:/\bappeal\b|\bappellant\b|\br\.?f\.?a\b|\bc\.?r\.?a\b/},
+  {label:"Revision",   test:/\brevision\b/},
+  {label:"Review",     test:/\breview\b|\b188\b/},
+  {label:"Reference",  test:/\breference\b|\b133\b/},
+  {label:"Contempt",   test:/\bcontempt\b/},
+  {label:"Suit",       test:/\bsuit\b|\bplaint\b/},
+  {label:"Petition",   test:/\bpetition\b|c\.?p\.?l\.?a|civil petition/}
+];
+
+const KEYWORDS = [
+  "mala fide","locus standi","res judicata","limitation","natural justice","burden of proof",
+  "benefit of doubt","circumstantial evidence","specific performance","ultra vires","jurisdiction",
+  "maintainability","estoppel","double jeopardy","fundamental rights","due process","speaking order",
+  "mitigating circumstances","common intention","dying declaration","identification parade",
+  "vicarious liability","abetment","confession","delay in fir","further inquiry"
+];
+
+const ACT_CANON = {
+  "crpc":"CrPC","cr.p.c":"CrPC","cr p c":"CrPC",
+  "ppc":"PPC","p.p.c":"PPC",
+  "cpc":"CPC","c.p.c":"CPC",
+  "peca":"PECA","cnsa":"CNSA","cns":"CNSA","ata":"ATA","nab":"NAB",
+  "qanun-e-shahadat":"QSO","qso":"QSO"
+};
+function canonAct(a){
+  if(!a) return "";
+  const k=a.toLowerCase().replace(/\s+/g,"").replace(/\.+$/,"");
+  return ACT_CANON[k] || ACT_CANON[a.toLowerCase().replace(/\s+/g,"")] || a.toUpperCase();
+}
+
+function readTags(){
+  const fields=[fCitation.value,fCaseName.value,fCourt.value,fKeyPoint.value,fNotes.value];
+  const original=fields.join("  •  ");
+  const hay=original.toLowerCase();
+  const found=[]; // {category,label}
+
+  // 1) SUBJECT — score each area, take the best (and a strong runner-up)
+  const scored=SUBJECT_RULES.map(r=>({label:r.label, score:r.terms.reduce((n,re)=>n+(re.test(hay)?1:0),0)}))
+                            .filter(s=>s.score>0).sort((a,b)=>b.score-a.score);
+  if(scored[0]) found.push({category:"subject", label:scored[0].label});
+  if(scored[1] && scored[1].score>=2) found.push({category:"subject", label:scored[1].label});
+
+  // 2) PROVISION — pull statutory references from the original (case-sensitive)
+  const provs=new Set();
+  let m;
+  const secRe=/\b[Ss]ec(?:tion)?s?\.?\s?(\d+[-]?[A-Za-z]?)\s*(?:of\s+(?:the\s+)?)?(Cr\.?\s?P\.?\s?C|P\.?\s?P\.?\s?C|C\.?\s?P\.?\s?C|PECA|CNSA?|ATA|NAB|QSO)?/g;
+  while((m=secRe.exec(original))!==null){
+    const act=canonAct(m[2]||"");
+    provs.add("S."+m[1].toUpperCase()+(act?" "+act:""));
+  }
+  const artRe=/\b[Aa]rt(?:icle)?\.?\s?(\d+[-]?[A-Z]?)/g;
+  while((m=artRe.exec(original))!==null){
+    const n=m[1].toUpperCase();
+    provs.add("Art."+n+(/\bconstitution\b/i.test(original)?" Constitution":""));
+  }
+  const ordRe=/\b[Oo]rder\s+([IVXLC]+|\d+)\s+[Rr]ule\s+(\d+)/g;
+  while((m=ordRe.exec(original))!==null){ provs.add("O."+m[1].toUpperCase()+" R."+m[2]+" CPC"); }
+  Array.from(provs).slice(0,3).forEach(p=>found.push({category:"provision", label:p}));
+
+  // 3) CASE TYPE — procedural posture, priority order, up to 2
+  let ctCount=0;
+  for(const r of CASETYPE_RULES){
+    if(r.test.test(hay)){ found.push({category:"casetype", label:r.label}); if(++ctCount>=2) break; }
+  }
+
+  // 4) KEYWORDS — doctrinal phrases, up to 3
+  let kw=0;
+  for(const k of KEYWORDS){
+    if(hay.includes(k)){
+      found.push({category:"keyword", label:k.replace(/\b\w/g,c=>c.toUpperCase())});
+      if(++kw>=3) break;
+    }
+  }
+
+  // de-dupe against tags already on the citation (case-insensitive)
+  const have=new Set(pendingTags.map(t=>t.label.toLowerCase()));
+  let added=0;
+  found.forEach(t=>{
+    if(!have.has(t.label.toLowerCase())){ pendingTags.push(t); have.add(t.label.toLowerCase()); added++; }
+  });
+  return added;
+}
+
+/* ============================================================
+   RENDER — court rail, collections, library
+   ============================================================ */
+function renderCourtRail(){
+  const rail=document.getElementById("courtRail");
+  rail.innerHTML="";
+  sources.forEach(s=>{
+    const b=document.createElement("button");
+    b.className="court";
+    b.innerHTML=`<span class="key">${s.code}</span><span class="meta"><span class="nm">${esc(s.name)}</span><span class="go">Open site ↗</span></span>`;
+    b.addEventListener("click", ()=> window.open(s.url, "_blank", "noopener"));
+    rail.appendChild(b);
+  });
+  const cl=document.getElementById("courtList");
+  cl.innerHTML="";
+  sources.forEach(s=>{ const o=document.createElement("option"); o.value=s.name; cl.appendChild(o); });
+}
+
+function countIn(folderId){
+  if(folderId==="all") return library.length;
+  return library.filter(it=>it.folderId===folderId).length;
+}
+
+function renderCollections(){
+  const list=document.getElementById("collectionList");
+  list.innerHTML="";
+
+  const all=document.createElement("button");
+  all.className="coll"+(activeCollection==="all"?" active":"");
+  all.innerHTML=`<span class="dot" style="background:var(--maroon)"></span><span class="nm">All citations</span><span class="ct">${countIn("all")}</span>`;
+  all.addEventListener("click", ()=>{ activeCollection="all"; closeDrawer(); renderLibrary(); renderCollections(); });
+  list.appendChild(all);
+
+  collections.forEach(c=>{
+    const el=document.createElement("button");
+    el.className="coll"+(activeCollection===c.id?" active":"");
+    el.innerHTML=`<span class="dot" style="background:${c.color}"></span><span class="nm">${esc(c.name)}</span>`+
+                 `<span class="cog" title="Rename or delete" aria-label="Edit collection">⋯</span>`+
+                 `<span class="ct">${countIn(c.id)}</span>`;
+    el.addEventListener("click", e=>{
+      if(e.target.classList.contains("cog")){ e.stopPropagation(); editCollection(c); return; }
+      activeCollection=c.id; closeDrawer(); renderLibrary(); renderCollections();
+    });
+    list.appendChild(el);
+  });
+}
+
+function syncModalCollections(selectedId){
+  const sel=document.getElementById("fCollection");
+  sel.innerHTML="";
+  const none=document.createElement("option"); none.value=""; none.textContent="— Unfiled —"; sel.appendChild(none);
+  collections.forEach(c=>{ const o=document.createElement("option"); o.value=c.id; o.textContent=c.name; sel.appendChild(o); });
+  sel.value=selectedId||"";
+}
+
+function allTagLabels(scope){
+  const set=new Set();
+  scope.forEach(it=>it.tags.forEach(t=>set.add(t.label)));
+  return Array.from(set);
+}
+
+function renderFilterChips(scope){
+  const row=document.getElementById("tagFilterRow");
+  row.innerHTML="";
+  const labels=allTagLabels(scope);
+  if(labels.length===0) return;
+  labels.forEach(label=>{
+    const chip=document.createElement("button");
+    chip.className="chip"+(activeTagFilter===label?" active":"");
+    chip.textContent=label;
+    chip.addEventListener("click", ()=>{ activeTagFilter = activeTagFilter===label?null:label; renderLibrary(); });
+    row.appendChild(chip);
+  });
+  if(activeTagFilter){
+    const clr=document.createElement("button");
+    clr.className="clearf"; clr.textContent="clear filter";
+    clr.addEventListener("click", ()=>{ activeTagFilter=null; renderLibrary(); });
+    row.appendChild(clr);
+  }
+}
+
+function renderLibrary(){
+  // header
+  const coll = activeCollection==="all" ? null : collById(activeCollection);
+  document.getElementById("libTitle").textContent = coll ? coll.name : "All citations";
+  document.getElementById("libDot").style.background = coll ? coll.color : "var(--maroon)";
+
+  // scope by collection first (chips reflect only the active collection)
+  let scope = activeCollection==="all" ? library : library.filter(it=>it.folderId===activeCollection);
+  renderFilterChips(scope);
+
+  let items = scope;
+  if(activeTagFilter) items = items.filter(it=>it.tags.some(t=>t.label===activeTagFilter));
+  const q=document.getElementById("librarySearch").value.trim().toLowerCase();
+  if(q){
+    items=items.filter(it=>{
+      const blob=[it.citation,it.caseName,it.court,it.keyPoint,it.notes,...it.tags.map(t=>t.label)].join(" ").toLowerCase();
+      return blob.includes(q);
+    });
+  }
+
+  document.getElementById("libCount").textContent=items.length;
+  const list=document.getElementById("libraryList");
+
+  if(items.length===0){
+    const reason = library.length===0
+      ? `Nothing saved yet. Search a court above, then paste the judgment's link to keep it here.`
+      : (q || activeTagFilter)
+        ? `No citations match this filter. Clear it to see the rest of the collection.`
+        : `This collection is empty. Open any citation and assign it here.`;
+    list.innerHTML=`<div class="empty">${PALM_SVG}<h3>${library.length===0?"Your library is empty":"Nothing here yet"}</h3><p>${reason}</p></div>`;
+    return;
+  }
+
+  list.innerHTML="";
+  items.forEach(it=>{
+    const card=document.createElement("div");
+    card.className="card";
+    const c=collById(it.folderId);
+    card.style.borderLeftColor = c ? c.color : "var(--maroon)";
+
+    const tagsHtml = it.tags.map(t=>`<span class="pill ${tagClass[t.category]}"><span class="pk">${tagPrefix[t.category]}</span> ${esc(t.label)}</span>`).join("");
+    const filesHtml = it.files.length ? `<div class="card-files">${it.files.map(f=>`<span class="file-chip">📄 ${esc(f.name)}</span>`).join("")}</div>` : "";
+    const collHtml = c ? `<span class="card-coll"><span class="d" style="background:${c.color}"></span>${esc(c.name)}</span>` : "";
+    const metaBits=[esc(it.court||"—"), it.year?"· "+esc(it.year):""].filter(Boolean).join(" ");
+    const srcHtml = it.sourceUrl ? `<a class="src-link" href="${esc(it.sourceUrl)}" target="_blank" rel="noopener">View original ↗</a>` : `<span></span>`;
+
+    card.innerHTML=`
+      <div class="card-top">
+        <div>
+          <div class="card-code">${esc(it.citation)}</div>
+          <div class="card-meta">${metaBits}${collHtml?` · ${collHtml}`:""}</div>
+        </div>
+      </div>
+      <div class="card-name">${esc(it.caseName)}</div>
+      ${it.keyPoint?`<div class="card-point">${esc(it.keyPoint)}</div>`:""}
+      ${it.notes?`<div class="card-notes">${esc(it.notes)}</div>`:""}
+      ${tagsHtml?`<div class="card-tags">${tagsHtml}</div>`:""}
+      ${filesHtml}
+      <div class="card-bottom">
+        ${srcHtml}
+        <div class="card-actions">
+          <button class="btn ghost editBtn">Edit</button>
+          <button class="btn ghost deleteBtn">Delete</button>
+        </div>
+      </div>`;
+    card.querySelector(".editBtn").addEventListener("click", ()=>openModal(it));
+    card.querySelector(".deleteBtn").addEventListener("click", ()=>{
+      if(confirm("Delete this saved citation?")){
+        library=library.filter(x=>x.id!==it.id);
+        save(); renderLibrary(); renderCollections();
+        toast("Citation deleted");
+      }
+    });
+    list.appendChild(card);
+  });
+}
+
+/* ============================================================
+   MODAL — citation editor
+   ============================================================ */
+const overlay=document.getElementById("overlay");
+const fCitation=document.getElementById("fCitation");
+const fCaseName=document.getElementById("fCaseName");
+const fCourt=document.getElementById("fCourt");
+const fYear=document.getElementById("fYear");
+const fKeyPoint=document.getElementById("fKeyPoint");
+const fNotes=document.getElementById("fNotes");
+const fSourceUrl=document.getElementById("fSourceUrl");
+const sourceUrlField=document.getElementById("sourceUrlField");
+const fileRow=document.getElementById("fileRow");
+const fileInput=document.getElementById("fileInput");
+const tagArea=document.getElementById("tagArea");
+const tagStatus=document.getElementById("tagStatus");
+
+function openModal(data){
+  editingId = data && data.id ? data.id : null;
+  document.getElementById("modalTitle").textContent = editingId ? "Edit citation" : "Save to library";
+  document.getElementById("modalDelete").style.display = editingId ? "inline" : "none";
+  fCitation.value=data?.citation||"";
+  fCaseName.value=data?.caseName||"";
+  fCourt.value=data?.court||"";
+  fYear.value=data?.year||"";
+  fKeyPoint.value=data?.keyPoint||"";
+  fNotes.value=data?.notes||"";
+  pendingFiles=data?.files?[...data.files]:[];
+  pendingTags=data?.tags?data.tags.map(t=>({...t})):[];
+
+  // default the collection to the active one when creating new
+  const preColl = data?.folderId!==undefined ? data.folderId : (activeCollection!=="all"?activeCollection:"");
+  syncModalCollections(preColl);
+
+  if(data?.sourceUrl){ fSourceUrl.value=data.sourceUrl; sourceUrlField.style.display="block"; }
+  else{ fSourceUrl.value=""; sourceUrlField.style.display="none"; }
+
+  fCitation.classList.remove("invalid"); fCaseName.classList.remove("invalid");
+  document.getElementById("errCitation").textContent="";
+  document.getElementById("errCaseName").textContent="";
+  tagStatus.textContent=""; tagStatus.className="tag-status";
+  renderFileChips(); renderTagPills();
+  overlay.classList.remove("hidden");
+  fCitation.focus();
+}
+function closeModal(){ overlay.classList.add("hidden"); }
+
+document.getElementById("closeModal").addEventListener("click", closeModal);
+document.getElementById("cancelBtn").addEventListener("click", closeModal);
+overlay.addEventListener("click", e=>{ if(e.target===overlay) closeModal(); });
+document.getElementById("newCitationBtn").addEventListener("click", ()=>{ closeDrawer(); openModal(null); });
+
+document.getElementById("modalDelete").addEventListener("click", ()=>{
+  if(editingId && confirm("Delete this saved citation?")){
+    library=library.filter(x=>x.id!==editingId);
+    save(); closeModal(); renderLibrary(); renderCollections();
+    toast("Citation deleted");
+  }
+});
+
+/* paste-to-save */
+function guessCourt(url){
+  const u=url.toLowerCase();
+  if(u.includes("supremecourt")||u.includes("scp.gov")) return "Supreme Court of Pakistan";
+  if(u.includes("lhc.gov")) return "Lahore High Court";
+  if(u.includes("sindhhighcourt")||u.includes("shc.gov")) return "Sindh High Court";
+  if(u.includes("bhc.gov")) return "Balochistan High Court";
+  if(u.includes("peshawarhighcourt")) return "Peshawar High Court";
+  if(u.includes("ihc.gov")) return "Islamabad High Court";
+  return "";
+}
+function doPaste(){
+  const url=document.getElementById("pasteUrl").value.trim();
+  if(!url) return;
+  openModal({sourceUrl:url, court:guessCourt(url)});
+  document.getElementById("pasteUrl").value="";
+}
+document.getElementById("pasteBtn").addEventListener("click", doPaste);
+document.getElementById("pasteUrl").addEventListener("keydown", e=>{ if(e.key==="Enter") doPaste(); });
+
+/* files */
+document.getElementById("fileBtn").addEventListener("click", ()=>fileInput.click());
+fileInput.addEventListener("change", ()=>{
+  Array.from(fileInput.files).forEach(f=>pendingFiles.push({name:f.name}));
+  fileInput.value=""; renderFileChips();
+});
+function renderFileChips(){
+  fileRow.innerHTML="";
+  if(pendingFiles.length===0){ fileRow.style.display="none"; return; }
+  fileRow.style.display="flex";
+  pendingFiles.forEach((f,i)=>{
+    const chip=document.createElement("span");
+    chip.className="file-chip";
+    chip.innerHTML=`📄 ${esc(f.name)} <button data-i="${i}" aria-label="Remove file">✕</button>`;
+    chip.querySelector("button").addEventListener("click", ()=>{ pendingFiles.splice(i,1); renderFileChips(); });
+    fileRow.appendChild(chip);
+  });
+}
+
+/* tags inside modal */
+function renderTagPills(){
+  tagArea.innerHTML="";
+  pendingTags.forEach((t,i)=>{
+    const pill=document.createElement("span");
+    pill.className="pill "+tagClass[t.category];
+    pill.innerHTML=`<span class="pk">${tagPrefix[t.category]}</span> ${esc(t.label)} <button data-i="${i}" aria-label="Remove tag">✕</button>`;
+    pill.querySelector("button").addEventListener("click", ()=>{ pendingTags.splice(i,1); renderTagPills(); });
+    tagArea.appendChild(pill);
+  });
+}
+document.getElementById("addTagText").addEventListener("keydown", e=>{
+  if(e.key==="Enter"){
+    const text=e.target.value.trim();
+    if(!text) return;
+    pendingTags.push({category:document.getElementById("addTagCategory").value, label:text});
+    e.target.value=""; renderTagPills();
+  }
+});
+
+/* offline "read tags" button */
+document.getElementById("genTagsBtn").addEventListener("click", ()=>{
+  if(!fCitation.value.trim() && !fCaseName.value.trim() && !fKeyPoint.value.trim() && !fNotes.value.trim()){
+    tagStatus.textContent="Add a citation or holding first, then read tags.";
+    tagStatus.className="tag-status";
+    return;
+  }
+  const added=readTags();
+  renderTagPills();
+  if(added>0){
+    tagStatus.textContent=`Read ${added} tag${added>1?"s":""} from the text — edit or remove any.`;
+    tagStatus.className="tag-status ok";
+  }else{
+    tagStatus.textContent="No new tags matched — add them by hand below.";
+    tagStatus.className="tag-status";
+  }
+});
+
+/* save */
+document.getElementById("saveBtn").addEventListener("click", ()=>{
+  const citation=fCitation.value.trim();
+  const caseName=fCaseName.value.trim();
+  document.getElementById("errCitation").textContent = citation?"":"Citation is required.";
+  document.getElementById("errCaseName").textContent = caseName?"":"Case name is required.";
+  fCitation.classList.toggle("invalid", !citation);
+  fCaseName.classList.toggle("invalid", !caseName);
+  if(!citation||!caseName){ if(!citation) fCitation.focus(); else fCaseName.focus(); return; }
+
+  const folderId=document.getElementById("fCollection").value || null;
+  const entry={
+    id: editingId || Date.now(),
+    citation, caseName,
+    court:fCourt.value.trim(), year:fYear.value.trim(),
+    keyPoint:fKeyPoint.value.trim(), notes:fNotes.value.trim(),
+    folderId, files:[...pendingFiles], tags:[...pendingTags],
+    sourceUrl:fSourceUrl.value.trim()
+  };
+  if(editingId) library=library.map(it=>it.id===editingId?entry:it);
+  else library.push(entry);
+
+  save(); closeModal(); renderLibrary(); renderCollections();
+  const where = folderId ? `“${collById(folderId)?.name}”` : "your library";
+  toast(editingId?"Citation updated":"Saved to "+where);
+});
+
+/* ============================================================
+   COLLECTIONS — create / rename / delete
+   ============================================================ */
+function nextColor(){ return COLL_COLORS[collections.length % COLL_COLORS.length]; }
+
+function createCollection(presetFromModal){
+  const name=prompt("Name this collection (e.g. Tax 2024, Service appeals):");
+  if(name===null) return null;
+  const trimmed=name.trim();
+  if(!trimmed) return null;
+  const c={id:"c_"+Date.now(), name:trimmed, color:nextColor()};
+  collections.push(c);
+  save(); renderCollections();
+  if(presetFromModal) syncModalCollections(c.id);
+  toast("Collection created");
+  return c;
+}
+document.getElementById("newCollBtn").addEventListener("click", ()=>createCollection(false));
+document.getElementById("modalNewColl").addEventListener("click", ()=>createCollection(true));
+
+function editCollection(c){
+  const name=prompt("Rename collection — or clear the box and press OK to delete it:", c.name);
+  if(name===null) return;
+  const trimmed=name.trim();
+  if(trimmed===""){
+    if(confirm(`Delete “${c.name}”? Its citations stay in your library and become unfiled.`)){
+      collections=collections.filter(x=>x.id!==c.id);
+      library.forEach(it=>{ if(it.folderId===c.id) it.folderId=null; });
+      if(activeCollection===c.id) activeCollection="all";
+      save(); renderCollections(); renderLibrary();
+      toast("Collection deleted");
+    }
+    return;
+  }
+  c.name=trimmed;
+  save(); renderCollections(); renderLibrary();
+}
+
+/* ============================================================
+   EXPORT / IMPORT  (backup for a localStorage-only app)
+   ============================================================ */
+document.getElementById("exportBtn").addEventListener("click", ()=>{
+  const blob=new Blob([JSON.stringify({library,collections,exported:new Date().toISOString()},null,2)],{type:"application/json"});
+  const a=document.createElement("a");
+  const d=new Date(); const stamp=`${d.getFullYear()}${String(d.getMonth()+1).padStart(2,"0")}${String(d.getDate()).padStart(2,"0")}`;
+  a.href=URL.createObjectURL(blob); a.download=`sanad-backup-${stamp}.json`;
+  document.body.appendChild(a); a.click(); a.remove(); URL.revokeObjectURL(a.href);
+  toast("Backup downloaded");
+});
+document.getElementById("importBtn").addEventListener("click", ()=>document.getElementById("importFile").click());
+document.getElementById("importFile").addEventListener("change", e=>{
+  const file=e.target.files[0]; if(!file) return;
+  const reader=new FileReader();
+  reader.onload=()=>{
+    try{
+      const data=JSON.parse(reader.result);
+      if(!Array.isArray(data.library)) throw new Error("bad file");
+      if(!confirm("Replace your current library with this backup?")) return;
+      library=data.library;
+      collections=Array.isArray(data.collections)?data.collections:[];
+      activeCollection="all"; activeTagFilter=null;
+      save(); renderCollections(); renderLibrary();
+      toast("Backup restored");
+    }catch(err){ alert("That file could not be read as a Sanad backup."); }
+    finally{ e.target.value=""; }
+  };
+  reader.readAsText(file);
+});
+
+/* ============================================================
+   MOBILE DRAWER
+   ============================================================ */
+const sidebar=document.getElementById("sidebar");
+const scrim=document.getElementById("scrim");
+function openDrawer(){ sidebar.classList.add("open"); scrim.classList.add("show"); }
+function closeDrawer(){ sidebar.classList.remove("open"); scrim.classList.remove("show"); }
+document.getElementById("burger").addEventListener("click", openDrawer);
+scrim.addEventListener("click", closeDrawer);
+
+/* global keys */
+document.addEventListener("keydown", e=>{
+  if(e.key==="Escape"){ if(!overlay.classList.contains("hidden")) closeModal(); else closeDrawer(); }
+});
+
+/* search */
+document.getElementById("librarySearch").addEventListener("input", renderLibrary);
+
+/* ============================================================
+   BOOT
+   ============================================================ */
+load();
+renderCourtRail();
+renderCollections();
+renderLibrary();
+</script>
+</body>
+</html>
